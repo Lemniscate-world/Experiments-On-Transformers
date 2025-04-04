@@ -137,3 +137,84 @@ class EncodeDecode(nn.Module):
                 The output tensor after applying the linear transformation and softmax activation.
             """
             return log_softmax(self.proj(x), dim=-1)
+        
+        ###### Encoder & Decoder Stacks
+
+        def clones(module, N):
+            """
+            Creates N identical layers using the provided module.
+
+            Args:
+                module: The module to be cloned.
+                N: The number of clones to create.
+
+            Returns:
+                A list of N identical modules.
+            """
+            return nn.ModuleList([copy.deepcopy(module) for _ in range(N)])
+        
+        class Encoder(nn.Module):
+            """
+            The Encoder module is responsible for encoding the input sequence.
+            It typically involves applying a series of layers to the input.
+            """
+
+            def __init__(self, layer, N):
+                """
+                Initializes the Encoder module.
+
+                Args:
+                    layer: The layer to be applied in the encoder.
+                    N: The number of layers in the encoder.
+                """
+                super(Encoder, self).__init__()
+                self.layers = clones(layer, N)
+                self.norm = LayerNorm(layer.size)
+
+            def forward(self, x, mask):
+                """
+                Forward pass of the Encoder module.
+
+                Args:
+                    x: The input tensor.
+                    mask: The mask for the input sequence.
+
+                Returns:
+                    The encoded representation of the input sequence.
+                """
+                for layer in self.layers:
+                    x = layer(x, mask)
+                return self.norm(x)
+            
+        class LayerNorm(nn.Module):
+            """
+            The LayerNorm module applies layer normalization to the input tensor.
+            It typically involves normalizing the input across the feature dimension.
+            """ 
+
+            def __init__(self, features, eps=1e-6):
+                """
+                Initializes the LayerNorm module.
+
+                Args:
+                    features: The number of features in the input tensor.
+                    eps: A small value added to the denominator for numerical stability.
+                """
+                super(LayerNorm, self).__init__()
+                self.a_2 = nn.Parameter(torch.ones(features))
+                self.b_2 = nn.Parameter(torch.zeros(features))
+                self.eps = eps
+            
+            def forward(self, x):
+                """
+                Forward pass of the LayerNorm module.
+
+                Args:
+                    x: The input tensor.
+
+                Returns:
+                    The normalized input tensor.
+                """
+                mean = x.mean(-1, keepdim=True)
+                std = x.std(-1, keepdim=True)
+                return self.a_2 * (x - mean) / (std + self.eps) + self.b_2
