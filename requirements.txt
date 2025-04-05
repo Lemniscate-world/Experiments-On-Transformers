@@ -4,3 +4,6 @@ pandas>=1.5.0
 altair>=5.0.0
 spacy>=3.6.0
 gputil>=1.4.0
+typing-extensions>=4.0.0
+matplotlib>=3.5.0
+jupyter>=1.0.0
